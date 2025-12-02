@@ -2,6 +2,9 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Upload, LogOut, CheckCircle, Trash2, Edit2, Loader, X, Images } from 'lucide-react';
 
+// 👇 YOUR LIVE BACKEND URL
+const API_URL = "https://tanusri-server.onrender.com";
+
 const Dashboard = () => {
   const navigate = useNavigate();
   
@@ -16,13 +19,13 @@ const Dashboard = () => {
   const [galleryFiles, setGalleryFiles] = useState([]); 
 
   // Edit Mode States
-  const [editId, setEditId] = useState(null); // ID unte Edit Mode, null unte Add Mode
-  const [existingGallery, setExistingGallery] = useState([]); // Photos currently in database
+  const [editId, setEditId] = useState(null); 
+  const [existingGallery, setExistingGallery] = useState([]); 
 
   // System States
   const [services, setServices] = useState([]);
-  const [loading, setLoading] = useState(false); // For button loading
-  const [fetching, setFetching] = useState(true); // For initial list loading
+  const [loading, setLoading] = useState(false); 
+  const [fetching, setFetching] = useState(true); 
   const [message, setMessage] = useState('');
 
   // --- 1. LOGOUT ---
@@ -34,7 +37,8 @@ const Dashboard = () => {
   // --- 2. FETCH SERVICES (Load List) ---
   const fetchServices = async () => {
     try {
-        const response = await fetch('http://localhost:5000/api/services/all');
+        // Updated URL
+        const response = await fetch(`${API_URL}/api/services/all`);
         const data = await response.json();
         setServices(data);
     } catch (error) { 
@@ -53,10 +57,8 @@ const Dashboard = () => {
     setCategory(service.category);
     setEditId(service._id);
     
-    // Patha gallery photos ni load cheyyi
     setExistingGallery(service.gallery || []);
     
-    // Reset file inputs (User kothavi pedithe ne marustam)
     setMainFile(null);
     setGalleryFiles([]); 
     
@@ -71,21 +73,21 @@ const Dashboard = () => {
     setEditId(null); setMessage('');
   };
 
-  // --- 5. REMOVE SINGLE GALLERY IMAGE (Backend Call) ---
+  // --- 5. REMOVE SINGLE GALLERY IMAGE ---
   const handleRemoveImage = async (imgUrl) => {
     if(!confirm("Delete this photo from gallery?")) return;
 
     try {
-        const response = await fetch(`http://localhost:5000/api/services/remove-image/${editId}`, {
+        // Updated URL
+        const response = await fetch(`${API_URL}/api/services/remove-image/${editId}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ imageUrl: imgUrl })
         });
 
         if (response.ok) {
-            // UI Update: Remove image locally instantly
             setExistingGallery(existingGallery.filter(img => img !== imgUrl));
-            fetchServices(); // Sync with backend
+            fetchServices(); 
             setMessage("Image removed successfully!");
         } else {
             setMessage("Failed to remove image");
@@ -106,25 +108,23 @@ const Dashboard = () => {
     formData.append('title', title);
     formData.append('description', description);
     formData.append('category', category);
-    formData.append('price', "Contact"); // Default price
+    formData.append('price', "Contact"); 
 
-    // Add Main Image if selected
     if (mainFile) formData.append('image', mainFile);
     
-    // Add Multiple Gallery Images
     for (let i = 0; i < galleryFiles.length; i++) {
         formData.append('gallery', galleryFiles[i]);
     }
 
     try {
-      let url = 'http://localhost:5000/api/services/add';
+      // Updated URLs
+      let url = `${API_URL}/api/services/add`;
       let method = 'POST';
 
       if (editId) {
-        url = `http://localhost:5000/api/services/update/${editId}`;
+        url = `${API_URL}/api/services/update/${editId}`;
         method = 'PUT';
       } else {
-        // Validation for New Service
         if (!mainFile) { 
             setMessage('Main image is required!'); 
             setLoading(false); 
@@ -137,8 +137,8 @@ const Dashboard = () => {
 
       if (response.ok) {
         setMessage(editId ? '✅ Updated Successfully!' : '✅ Added Successfully!');
-        cancelEdit(); // Clear form
-        fetchServices(); // Refresh list
+        cancelEdit(); 
+        fetchServices(); 
       } else {
         setMessage(`❌ Error: ${data.error}`);
       }
@@ -154,10 +154,11 @@ const Dashboard = () => {
     if(!confirm("Are you sure? This will delete the service and all its photos.")) return;
     
     try {
-        const response = await fetch(`http://localhost:5000/api/services/delete/${id}`, { method: 'DELETE' });
+        // Updated URL
+        const response = await fetch(`${API_URL}/api/services/delete/${id}`, { method: 'DELETE' });
         if (response.ok) {
             setServices(services.filter(s => s._id !== id));
-            if (editId === id) cancelEdit(); // If editing same item, cancel edit
+            if (editId === id) cancelEdit(); 
         }
     } catch (error) {
         console.error(error);
